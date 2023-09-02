@@ -1,0 +1,28 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  name: discord-handler
+  namespace: splitwise-sync
+spec:
+  template:
+    metadata:
+      annotations:
+        client.knative.dev/updateTimestamp: "2023-09-02T06:13:36Z"
+        client.knative.dev/user-image: ghcr.io/pbar1/splitwise-sync:latest
+      creationTimestamp: null
+    spec:
+      containers:
+      - args:
+        - server
+        env:
+        - name: DISCORD_PUBLIC_KEY
+          value: <changeme>
+        - name: DISCORD_BOT_TOKEN
+          value: <changeme>
+        image: ghcr.io/pbar1/splitwise-sync:latest
+        name: ""
+        ports:
+        - containerPort: 8080
+        resources: {}
+status: {}
