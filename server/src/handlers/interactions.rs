@@ -6,7 +6,8 @@ use ed25519_compact::PublicKey;
 use ed25519_compact::Signature;
 use once_cell::sync::Lazy;
 use twilight_model::application::interaction::Interaction;
-use twilight_model::application::interaction::InteractionType::Ping;
+use twilight_model::application::interaction::InteractionData as InData;
+use twilight_model::application::interaction::InteractionType as InType;
 use twilight_model::http::interaction::InteractionResponse;
 use twilight_model::http::interaction::InteractionResponseType;
 
@@ -50,10 +51,33 @@ async fn interactions_dispatch(body: &Bytes) -> Result<Json<InteractionResponse>
         serde_json::from_slice(body).map_err(|_| StatusCode::BAD_REQUEST)?;
 
     match (interaction.kind, interaction.data) {
-        (Ping, _) => Ok(Json(InteractionResponse {
-            kind: InteractionResponseType::Pong,
-            data: None,
-        })),
+        (InType::Ping, _) => {
+            tracing::debug!("received Ping interaction");
+            Ok(Json(InteractionResponse {
+                kind: InteractionResponseType::Pong,
+                data: None,
+            }))
+        }
+
+        (InType::ApplicationCommand, Some(InData::ApplicationCommand(data))) => {
+            tracing::debug!(?data, "received ApplicationCommand interaction");
+            Err(StatusCode::NOT_IMPLEMENTED)
+        }
+
+        (InType::MessageComponent, Some(InData::MessageComponent(data))) => {
+            tracing::debug!(?data, "received MessageComponent interaction");
+            Err(StatusCode::NOT_IMPLEMENTED)
+        }
+
+        (InType::ApplicationCommandAutocomplete, Some(InData::ApplicationCommand(data))) => {
+            tracing::debug!(?data, "received ApplicationCommandAutocomplete interaction");
+            Err(StatusCode::NOT_IMPLEMENTED)
+        }
+
+        (InType::ModalSubmit, Some(InData::ModalSubmit(data))) => {
+            tracing::debug!(?data, "received ModalSubmit interaction");
+            Err(StatusCode::NOT_IMPLEMENTED)
+        }
 
         _ => Err(StatusCode::BAD_REQUEST),
     }

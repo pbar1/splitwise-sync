@@ -30,7 +30,8 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("building routes");
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
-        .route("/interactions", post(handlers::interactions));
+        .route("/interactions", post(handlers::interactions))
+        .route("/msg", get(handlers::reflector));
 
     tracing::info!(addr = %&args.addr, "starting server");
     axum::Server::bind(&args.addr)
