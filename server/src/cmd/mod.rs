@@ -1,14 +1,11 @@
-mod publish;
-mod server;
-
-pub use self::publish::PublishArgs;
-pub use self::server::ServerArgs;
+pub mod publish;
+pub mod server;
 
 #[derive(Debug, clap::Subcommand)]
 pub enum Command {
     /// Run a Discord webhook server to listen for interactions
-    Server(ServerArgs),
+    Server(server::ServerArgs),
 
     /// Publish transactions as messages to a Discord channel
-    Publish(PublishArgs),
+    Publish(publish::PublishArgs),
 }

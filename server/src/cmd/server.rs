@@ -2,6 +2,7 @@ use axum::routing::get;
 use axum::routing::post;
 use axum::Router;
 use clap::Args;
+use ed25519_compact::PublicKey;
 use tokio::signal::unix::SignalKind;
 
 use crate::handlers;
@@ -11,14 +12,33 @@ pub struct ServerArgs {
     /// Address and port to expose the HTTP server on
     #[arg(long, default_value = "0.0.0.0:8080")]
     addr: std::net::SocketAddr,
+
+    /// Discord application public key
+    #[arg(long, env = "DISCORD_PUBLIC_KEY")]
+    public_key: String,
+}
+
+#[derive(Clone)]
+pub struct ServerState {
+    pub public_key: PublicKey,
+    pub bot_token: String,
 }
 
 impl ServerArgs {
-    pub async fn run(&self) -> anyhow::Result<()> {
+    pub async fn run(&self, token: String) -> anyhow::Result<()> {
+        let public_key = hex::decode(&self.public_key)?;
+        let public_key = PublicKey::from_slice(&public_key)?;
+
+        let state = ServerState {
+            public_key,
+            bot_token: token,
+        };
+
         tracing::info!("building routes");
         let app = Router::new()
             .route("/", get(|| async { "Hello, World!" }))
-            .route("/interactions", post(handlers::interactions));
+            .route("/interactions", post(handlers::interactions))
+            .with_state(state);
 
         tracing::info!(addr = %&self.addr, "starting server");
         axum::Server::bind(&self.addr)

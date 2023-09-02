@@ -1,29 +1,23 @@
 use anyhow::Context;
 use axum::body::Bytes;
+use axum::extract::State;
 use axum::http::HeaderMap;
 use axum::http::StatusCode;
 use axum::Json;
-use ed25519_compact::PublicKey;
 use ed25519_compact::Signature;
-use once_cell::sync::Lazy;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::InteractionData as InData;
 use twilight_model::application::interaction::InteractionType as InType;
 use twilight_model::http::interaction::InteractionResponse;
 use twilight_model::http::interaction::InteractionResponseType;
 
-use crate::discord::get_client;
+use crate::cmd::server::ServerState;
 
 const HEADER_SIGNATURE: &str = "X-Signature-Ed25519";
 const HEADER_TIMESTAMP: &str = "X-Signature-Timestamp";
 
-static PUBLIC_KEY: Lazy<PublicKey> = Lazy::new(|| {
-    let key_hex = std::env::var("DISCORD_PUBLIC_KEY").expect("DISCORD_PUBLIC_KEY required");
-    let key_bytes = hex::decode(key_hex).expect("error decoding hex");
-    PublicKey::from_slice(&key_bytes).expect("error decoding ed25519 public key")
-});
-
 pub async fn interactions(
+    state: State<ServerState>,
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Json<InteractionResponse>, StatusCode> {
@@ -41,15 +35,18 @@ pub async fn interactions(
 
     let msg = [timestamp, &body].concat();
 
-    PUBLIC_KEY
+    state
+        .public_key
         .verify(msg, &signature)
         .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    interactions_dispatch(&body).await
+    interactions_dispatch(state, &body).await
 }
 
-#[allow(clippy::unused_async)]
-async fn interactions_dispatch(body: &Bytes) -> Result<Json<InteractionResponse>, StatusCode> {
+async fn interactions_dispatch(
+    state: State<ServerState>,
+    body: &Bytes,
+) -> Result<Json<InteractionResponse>, StatusCode> {
     let interaction: Interaction =
         serde_json::from_slice(body).map_err(|_| StatusCode::BAD_REQUEST)?;
 
@@ -85,7 +82,8 @@ async fn interactions_dispatch(body: &Bytes) -> Result<Json<InteractionResponse>
                 .context("message was empty")
                 .map_err(|_| StatusCode::BAD_REQUEST)?
                 .id;
-            let client = get_client().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+            let client = twilight_http::Client::new(state.bot_token.clone());
 
             tracing::info!("deleting processed message");
             client

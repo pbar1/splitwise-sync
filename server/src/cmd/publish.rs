@@ -24,18 +24,14 @@ pub struct PublishArgs {
     #[arg(long, short = 'a')]
     amount: String,
 
-    /// Token to authenticate with Discord
-    #[arg(long, env = "DISCORD_BOT_TOKEN")]
-    bot_token: String,
-
     /// ID of the Discord channel to publish messages to
     #[arg(long, env = "DISCORD_CHANNEL_ID")]
     channel_id: Id<ChannelMarker>,
 }
 
 impl PublishArgs {
-    pub async fn run(&self) -> anyhow::Result<()> {
-        let client = twilight_http::Client::new(self.bot_token.clone());
+    pub async fn run(&self, token: String) -> anyhow::Result<()> {
+        let client = twilight_http::Client::new(token);
 
         let button = Component::ActionRow(ActionRow {
             components: Vec::from([

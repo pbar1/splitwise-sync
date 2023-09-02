@@ -1,8 +1,9 @@
 #![warn(clippy::pedantic)]
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::module_name_repetitions)]
 
-mod cmd;
-mod discord;
-mod handlers;
+pub mod cmd;
+pub mod handlers;
 
 use clap::Args;
 use clap::Parser;
@@ -17,7 +18,7 @@ struct Cli {
     global_args: GlobalArgs,
 
     #[clap(subcommand)]
-    command: cmd::Command,
+    command: Command,
 }
 
 /// Global flags that will be flattened into the CLI and available to all
@@ -27,6 +28,10 @@ struct GlobalArgs {
     /// Log level
     #[arg(long, env = "RUST_LOG", default_value = "info")]
     log_level: String,
+
+    /// Token to authenticate with Discord
+    #[arg(long, env = "DISCORD_BOT_TOKEN")]
+    bot_token: String,
 }
 
 #[tokio::main]
@@ -35,9 +40,11 @@ async fn main() -> anyhow::Result<()> {
     init_tracing(&args.global_args.log_level)?;
     tracing::debug!("finished init");
 
+    let token = args.global_args.bot_token;
+
     match args.command {
-        Command::Server(args) => args.run().await?,
-        Command::Publish(args) => args.run().await?,
+        Command::Server(args) => args.run(token).await?,
+        Command::Publish(args) => args.run(token).await?,
     }
 
     Ok(())
