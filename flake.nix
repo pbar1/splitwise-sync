@@ -8,6 +8,11 @@
     let
       pkgsLinux = nixpkgs.legacyPackages.x86_64-linux;
 
+      user = "pbar1";
+      repo = "splitwise-sync";
+      imageSource = "https://github.com/${user}/${repo}";
+      imageName = "ghcr.io/${user}/${repo}";
+
       # FIXME: I think this only worked because "server" was the only member of the
       # Cargo workspace
       server = pkgsLinux.rustPlatform.buildRustPackage {
@@ -20,10 +25,14 @@
       # FIXME: Had to run this:
       # gzip --decompress --stdout --force < ./result > result.tar
       serverImage = pkgsLinux.dockerTools.buildLayeredImage {
-        name = "ghcr.io/pbar1/splitwise-sync-discord";
+        name = "${imageName}-discord";
         tag = "latest";
         config = {
           Cmd = [ "${server}/bin/server" ];
+          Labels = {
+            "org.opencontainers.image.authors" = user;
+            "org.opencontainers.image.source" = imageSource;
+          };
         };
       };
     in
