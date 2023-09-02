@@ -6,38 +6,30 @@
   # https://discourse.nixos.org/t/cross-compiling-docker-images-with-flakes/25716/2
   outputs = { self, nixpkgs }:
     let
-      pkgs = nixpkgs.legacyPackages.aarch64-darwin;
       pkgsLinux = nixpkgs.legacyPackages.x86_64-linux;
 
       user = "pbar1";
-      repo = "splitwise-sync";
+      repo = "splitwise-sync"; # NOTE: Should match what's in Cargo.toml
       imageSource = "https://github.com/${user}/${repo}";
       imageName = "ghcr.io/${user}/${repo}";
 
-      serverLocal = pkgs.rustPlatform.buildRustPackage {
-        pname = "server";
-        version = "0.0.0";
-        src = ./.;
-        cargoSha256 = "sha256-qPOsSDrpEjuftdy4Mjsi/fjy6dZfUvq/eWDs1vGHzpU=";
-      };
-
-      # FIXME: I think this only worked because "server" was the only member of the
-      # Cargo workspace
+      # FIXME: I think this only worked because "splitwise-sync" was the only
+      # member of the Cargo workspace
       server = pkgsLinux.rustPlatform.buildRustPackage {
-        pname = "server";
+        pname = repo;
         version = "0.0.0";
         src = ./.;
-        cargoSha256 = "sha256-qPOsSDrpEjuftdy4Mjsi/fjy6dZfUvq/eWDs1vGHzpU=";
+        cargoSha256 = "sha256-dtYPICESudz6Sc/hsihGfyHrTxs8eFpiMYN6f19cw58=";
       };
 
       # FIXME: Had to run this:
       # gzip --decompress --stdout --force < ./result > result.tar
       serverImage = pkgsLinux.dockerTools.buildLayeredImage {
-        name = "${imageName}-discord";
+        name = "${imageName}";
         tag = "latest";
         contents = [ pkgsLinux.dockerTools.caCertificates ];
         config = {
-          Cmd = [ "${server}/bin/server" ];
+          Entrypoint = [ "${server}/bin/${repo}" ];
           Labels = {
             "org.opencontainers.image.authors" = user;
             "org.opencontainers.image.source" = imageSource;
@@ -47,7 +39,7 @@
     in
     {
       packages.aarch64-darwin = {
-        inherit serverLocal server serverImage;
+        inherit server serverImage;
       };
     };
 }
