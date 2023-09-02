@@ -1,5 +1,6 @@
 #![warn(clippy::pedantic)]
 
+mod discord;
 mod handlers;
 
 use axum::routing::get;

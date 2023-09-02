@@ -19,7 +19,7 @@
         pname = "server";
         version = "0.0.0";
         src = ./.;
-        cargoSha256 = "sha256-EQbB4WZNqDGtBA3jk/X6VAZKaT8NvZY/okBkBUKsNdA=";
+        cargoSha256 = "sha256-qPOsSDrpEjuftdy4Mjsi/fjy6dZfUvq/eWDs1vGHzpU=";
       };
 
       # FIXME: Had to run this:

@@ -1,3 +1,4 @@
+use anyhow::Context;
 use axum::body::Bytes;
 use axum::http::HeaderMap;
 use axum::http::StatusCode;
@@ -10,7 +11,8 @@ use twilight_model::application::interaction::InteractionData as InData;
 use twilight_model::application::interaction::InteractionType as InType;
 use twilight_model::http::interaction::InteractionResponse;
 use twilight_model::http::interaction::InteractionResponseType;
-use twilight_util::builder::InteractionResponseDataBuilder;
+
+use crate::discord::get_client;
 
 const HEADER_SIGNATURE: &str = "X-Signature-Ed25519";
 const HEADER_TIMESTAMP: &str = "X-Signature-Timestamp";
@@ -72,12 +74,29 @@ async fn interactions_dispatch(body: &Bytes) -> Result<Json<InteractionResponse>
             let transaction_id = data.custom_id;
             tracing::info!(%transaction_id, "found transaction ready to sync");
 
-            // FIXME: Wonder what this will even do
-            let response_data = InteractionResponseDataBuilder::new().build();
+            // FIXME: Pretend we already synced to Splitwise and delete the message
+            let channel_id = interaction
+                .channel
+                .context("channel was empty")
+                .map_err(|_| StatusCode::BAD_REQUEST)?
+                .id;
+            let message_id = interaction
+                .message
+                .context("message was empty")
+                .map_err(|_| StatusCode::BAD_REQUEST)?
+                .id;
+            let client = get_client().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+            tracing::info!("deleting processed message");
+            client
+                .delete_message(channel_id, message_id)
+                .await
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            tracing::info!(%message_id, %channel_id, "message was deleted");
 
             Ok(Json(InteractionResponse {
                 kind: InteractionResponseType::DeferredUpdateMessage,
-                data: Some(response_data),
+                data: None,
             }))
         }
 
