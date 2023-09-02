@@ -6,12 +6,20 @@
   # https://discourse.nixos.org/t/cross-compiling-docker-images-with-flakes/25716/2
   outputs = { self, nixpkgs }:
     let
+      pkgs = nixpkgs.legacyPackages.aarch64-darwin;
       pkgsLinux = nixpkgs.legacyPackages.x86_64-linux;
 
       user = "pbar1";
       repo = "splitwise-sync";
       imageSource = "https://github.com/${user}/${repo}";
       imageName = "ghcr.io/${user}/${repo}";
+
+      serverLocal = pkgs.rustPlatform.buildRustPackage {
+        pname = "server";
+        version = "0.0.0";
+        src = ./.;
+        cargoSha256 = "sha256-qPOsSDrpEjuftdy4Mjsi/fjy6dZfUvq/eWDs1vGHzpU=";
+      };
 
       # FIXME: I think this only worked because "server" was the only member of the
       # Cargo workspace
@@ -27,6 +35,7 @@
       serverImage = pkgsLinux.dockerTools.buildLayeredImage {
         name = "${imageName}-discord";
         tag = "latest";
+        contents = [ pkgsLinux.dockerTools.caCertificates ];
         config = {
           Cmd = [ "${server}/bin/server" ];
           Labels = {
@@ -38,7 +47,7 @@
     in
     {
       packages.aarch64-darwin = {
-        inherit server serverImage;
+        inherit serverLocal server serverImage;
       };
     };
 }

@@ -1004,26 +1004,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "server"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "axum",
- "clap",
- "ed25519-compact",
- "hex",
- "once_cell",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "twilight-http",
- "twilight-model",
- "twilight-util",
-]
-
-[[package]]
 name = "sharded-slab"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1081,6 +1061,26 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "splitwise-sync"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "clap",
+ "ed25519-compact",
+ "hex",
+ "once_cell",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "twilight-http",
+ "twilight-model",
+ "twilight-util",
+]
 
 [[package]]
 name = "strsim"
