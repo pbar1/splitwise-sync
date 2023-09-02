@@ -10,6 +10,7 @@ use twilight_model::application::interaction::InteractionData as InData;
 use twilight_model::application::interaction::InteractionType as InType;
 use twilight_model::http::interaction::InteractionResponse;
 use twilight_model::http::interaction::InteractionResponseType;
+use twilight_util::builder::InteractionResponseDataBuilder;
 
 const HEADER_SIGNATURE: &str = "X-Signature-Ed25519";
 const HEADER_TIMESTAMP: &str = "X-Signature-Timestamp";
@@ -66,7 +67,18 @@ async fn interactions_dispatch(body: &Bytes) -> Result<Json<InteractionResponse>
 
         (InType::MessageComponent, Some(InData::MessageComponent(data))) => {
             tracing::debug!(?data, "received MessageComponent interaction");
-            Err(StatusCode::NOT_IMPLEMENTED)
+
+            // Assume the `custom_id` of the component is a transaction ID
+            let transaction_id = data.custom_id;
+            tracing::info!(%transaction_id, "found transaction ready to sync");
+
+            // FIXME: Wonder what this will even do
+            let response_data = InteractionResponseDataBuilder::new().build();
+
+            Ok(Json(InteractionResponse {
+                kind: InteractionResponseType::DeferredUpdateMessage,
+                data: Some(response_data),
+            }))
         }
 
         (InType::ApplicationCommandAutocomplete, Some(InData::ApplicationCommand(data))) => {
