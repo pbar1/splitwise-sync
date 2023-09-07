@@ -1,3 +1,4 @@
+pub mod batch_publish;
 pub mod publish;
 pub mod server;
 
@@ -8,4 +9,8 @@ pub enum Command {
 
     /// Publish transactions as messages to a Discord channel
     Publish(publish::PublishArgs),
+
+    /// Batch publish new transactions found from the diff of two Mint
+    /// transaction JSON files
+    BatchPublish(batch_publish::BatchPublishArgs),
 }

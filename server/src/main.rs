@@ -4,6 +4,7 @@
 
 pub mod cmd;
 pub mod handlers;
+pub mod models;
 
 use clap::Args;
 use clap::Parser;
@@ -45,6 +46,7 @@ async fn main() -> anyhow::Result<()> {
     match args.command {
         Command::Server(args) => args.run(token).await?,
         Command::Publish(args) => args.run(token).await?,
+        Command::BatchPublish(args) => args.run(token).await?,
     }
 
     Ok(())
