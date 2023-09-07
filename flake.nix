@@ -1,12 +1,14 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nix-filter.url = "github:numtide/nix-filter";
   };
 
   # https://discourse.nixos.org/t/cross-compiling-docker-images-with-flakes/25716/2
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, nix-filter }:
     let
       pkgsLinux = nixpkgs.legacyPackages.x86_64-linux;
+      filter = nix-filter.lib;
 
       user = "pbar1";
       repo = "splitwise-sync"; # NOTE: Should match what's in Cargo.toml
@@ -18,7 +20,14 @@
       server = pkgsLinux.rustPlatform.buildRustPackage {
         pname = repo;
         version = "0.0.0";
-        src = ./.;
+        src =  filter {
+          root = ./.;
+          include = [
+            "Cargo.lock"
+            "Cargo.toml"
+            "server"
+          ];
+        };
         cargoSha256 = "sha256-dtYPICESudz6Sc/hsihGfyHrTxs8eFpiMYN6f19cw58=";
       };
 
