@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: publisher
+  namespace: splitwise-sync
+spec:
+  concurrencyPolicy: Allow
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - args:
+            - batch-publish
+            - --glob=/data/transactions.*.json.gz
+            - --output=/tmp/new.json
+            env:
+            - name: DISCORD_BOT_TOKEN
+              value: dummy # FIXME:
+            - name: DISCORD_CHANNEL_ID
+              value: "1" # FIXME:
+            - name: RUST_LOG
+              value: debug
+            image: ghcr.io/pbar1/splitwise-sync:latest
+            imagePullPolicy: Always
+            name: splitwise-sync
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            volumeMounts:
+            - mountPath: /data
+              name: data
+            - mountPath: /tmp
+              name: tmp
+          dnsPolicy: ClusterFirst
+          restartPolicy: Never
+          schedulerName: default-scheduler
+          securityContext:
+            fsGroup: 100
+          terminationGracePeriodSeconds: 30
+          volumes:
+          - hostPath:
+              path: /data/general/mint
+              type: ""
+            name: data
+          - emptyDir: {}
+            name: tmp
+  schedule: 50 14 * * *
+  successfulJobsHistoryLimit: 3
+  suspend: false

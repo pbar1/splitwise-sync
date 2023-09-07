@@ -28,7 +28,7 @@
             "server"
           ];
         };
-        cargoSha256 = "sha256-dtYPICESudz6Sc/hsihGfyHrTxs8eFpiMYN6f19cw58=";
+        cargoSha256 = "sha256-dLyNC/yPz3PmBdAUFijIjE+uXvSw/L+XTWDlNLGC6dg=";
       };
 
       # FIXME: Had to run this:
@@ -36,7 +36,10 @@
       serverImage = pkgsLinux.dockerTools.buildLayeredImage {
         name = "${imageName}";
         tag = "latest";
-        contents = [ pkgsLinux.dockerTools.caCertificates ];
+        contents = with pkgsLinux; [
+          dockerTools.caCertificates
+          duckdb
+        ];
         config = {
           Entrypoint = [ "${server}/bin/${repo}" ];
           Labels = {
