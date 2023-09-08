@@ -4,6 +4,7 @@ use axum::extract::State;
 use axum::http::HeaderMap;
 use axum::http::StatusCode;
 use axum::Json;
+use chrono::DateTime;
 use chrono::NaiveDate;
 use chrono::NaiveTime;
 use chrono::TimeZone;
@@ -151,10 +152,8 @@ async fn create_splitwise_expense(
         .captures(&message.content)
         .context("unable to match regex")?;
 
-    let date = captures
-        .get(1)
-        .context("date not captured")
-        .and_then(|x| Ok(NaiveDate::parse_from_str(x.as_str(), "%Y-%m-%d")?))?;
+    let date = captures.get(1).context("date not captured")?.as_str();
+    let date = NaiveDate::parse_from_str(date, "%Y-%m-%d")?;
     let amount = captures
         .get(2)
         .context("amount not captured")?
@@ -175,13 +174,14 @@ async fn create_splitwise_expense(
         ?transaction_id,
         "creating splitwise expense"
     );
+    let date = naive_date_to_utc_datetime(date)?;
     let expenses = splitwise_client
         .expenses()
         .create_expense(CreateExpenseRequest {
             cost: amount,
             description: description.to_owned(),
             details: Some(format!("mint:{}", transaction_id)),
-            date: Utc.from_utc_datetime(&date.and_time(NaiveTime::default())), // FIXME: UTC offset is weird
+            date,
             repeat_interval: "never".to_string(),
             currency_code: "USD".to_string(),
             category_id: 0,
@@ -193,4 +193,18 @@ async fn create_splitwise_expense(
     tracing::debug!(?expenses, ?transaction_id, "created splitwise expenses");
 
     Ok(())
+}
+
+fn naive_date_to_utc_datetime(date: NaiveDate) -> anyhow::Result<DateTime<Utc>> {
+    let naive_datetime = date.and_time(NaiveTime::default());
+
+    // FIXME: Replace with chrono-tz and iana TZ resolution
+    let offset = chrono::FixedOffset::west_opt(8 * 3600).context("error making fixed offset")?;
+    let datetime = offset
+        .from_local_datetime(&naive_datetime)
+        .earliest()
+        .context("error making earliest offset dateime")?;
+
+    let datetime: DateTime<Utc> = DateTime::from(datetime);
+    Ok(datetime)
 }
