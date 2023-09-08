@@ -122,15 +122,17 @@ async fn handle_message_component(
 
     let message = interaction.message.context("message was empty")?;
 
-    if action.contains("accept") {
+    if action == "accept" {
         create_splitwise_expense(state.clone(), transaction_id, &message).await?;
     }
 
     let channel_id = interaction.channel.context("channel was empty")?.id;
     let message_id = message.id;
 
+    // FIXME: Instead of deleting the message entirely, keeping it while removing
+    // the buttons and adding a note of whether it was accepted or ignored would be
+    // nice
     tracing::info!("deleting processed message");
-
     let client = twilight_http::Client::new(state.bot_token.clone());
     client.delete_message(channel_id, message_id).await?;
     tracing::info!(%message_id, %channel_id, "message was deleted");
