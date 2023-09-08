@@ -83,6 +83,8 @@ async fn interactions_dispatch(
                 .map_err(|_| StatusCode::BAD_REQUEST)?
                 .id;
 
+            // parse custom id to see if ignore or accept
+
             let client = twilight_http::Client::new(state.bot_token.clone());
 
             tracing::info!("deleting processed message");

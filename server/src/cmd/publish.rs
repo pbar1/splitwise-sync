@@ -66,7 +66,6 @@ impl PublishArgs {
             .create_message(self.channel_id)
             .content(&content)?
             .components(&[button])?
-            .tts(true) // FIXME: What is this?
             .await?;
 
         tracing::debug!(?response, "received create message response");

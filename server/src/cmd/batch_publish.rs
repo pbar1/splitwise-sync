@@ -2,6 +2,10 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use clap::Args;
+use twilight_model::channel::message::component::ActionRow;
+use twilight_model::channel::message::component::Button;
+use twilight_model::channel::message::component::ButtonStyle;
+use twilight_model::channel::message::component::Component;
 use twilight_model::id::marker::ChannelMarker;
 use twilight_model::id::Id;
 
@@ -25,8 +29,6 @@ pub struct BatchPublishArgs {
 
 impl BatchPublishArgs {
     pub async fn run(&self, token: String) -> anyhow::Result<()> {
-        let _client = twilight_http::Client::new(token);
-
         // Find the last two files via lexical sort. This assumes that the transaction
         // files are named by timestamp
         let mut files: Vec<PathBuf> = glob::glob(&self.glob)?.flat_map(|x| x).collect();
@@ -46,7 +48,10 @@ impl BatchPublishArgs {
             let date = &txn.date;
             let description = &txn.description;
             let amount = &txn.amount;
+
             tracing::debug!(%id, %date, %description, %amount, "found new transaction");
+
+            publish_message(txn, self.channel_id, token.clone()).await?;
         }
 
         Ok(())
@@ -75,6 +80,53 @@ fn anti_join(cur: &str, prev: &str, output: &str) -> anyhow::Result<()> {
     std::process::Command::new("duckdb")
         .args(["-c", &query])
         .status()?;
+
+    Ok(())
+}
+
+async fn publish_message(
+    txn: Transaction,
+    channel_id: Id<ChannelMarker>,
+    token: String,
+) -> anyhow::Result<()> {
+    let client = twilight_http::Client::new(token);
+
+    let button = Component::ActionRow(ActionRow {
+        components: Vec::from([
+            Component::Button(Button {
+                custom_id: Some(format!("accept:{}", txn.id)),
+                disabled: false,
+                emoji: None,
+                label: Some("Accept".to_owned()),
+                style: ButtonStyle::Primary,
+                url: None,
+            }),
+            Component::Button(Button {
+                custom_id: Some(format!("ignore:{}", txn.id)),
+                disabled: false,
+                emoji: None,
+                label: Some("Ignore".to_owned()),
+                style: ButtonStyle::Secondary,
+                url: None,
+            }),
+        ]),
+    });
+
+    let content: String = vec![
+        "New transaction! Sync to Splitwise?",
+        &format!("- Date: {}", txn.date),
+        &format!("- Amount: {}", txn.amount),
+        &format!("- Description: {}", txn.description),
+    ]
+    .join("\n");
+
+    let response = client
+        .create_message(channel_id)
+        .content(&content)?
+        .components(&[button])?
+        .await?;
+
+    tracing::debug!(?response, "received create message response");
 
     Ok(())
 }
