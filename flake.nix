@@ -20,7 +20,7 @@
       server = pkgsLinux.rustPlatform.buildRustPackage {
         pname = repo;
         version = "0.0.0";
-        src =  filter {
+        src = filter {
           root = ./.;
           include = [
             "Cargo.lock"
@@ -28,7 +28,10 @@
             "server"
           ];
         };
-        cargoSha256 = "sha256-dLyNC/yPz3PmBdAUFijIjE+uXvSw/L+XTWDlNLGC6dg=";
+        cargoSha256 = "sha256-SODG4iWF7CpnzjExIoMru+EXWlvL8Vzyz8Kumi6V1FQ=";
+
+        nativeBuildInputs = [ pkgsLinux.pkg-config ];
+        buildInputs = [ pkgsLinux.openssl ];
       };
 
       # FIXME: Had to run this:

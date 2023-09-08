@@ -17,11 +17,11 @@ spec:
             - --output=/tmp/new.json
             env:
             - name: DISCORD_BOT_TOKEN
-              value: dummy # FIXME:
+              value: <todo>
             - name: DISCORD_CHANNEL_ID
-              value: "1" # FIXME:
+              value: <todo>
             - name: RUST_LOG
-              value: debug
+              value: splitwise_sync=debug
             image: ghcr.io/pbar1/splitwise-sync:latest
             imagePullPolicy: Always
             name: splitwise-sync

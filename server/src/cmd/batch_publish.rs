@@ -31,7 +31,7 @@ impl BatchPublishArgs {
     pub async fn run(&self, token: String) -> anyhow::Result<()> {
         // Find the last two files via lexical sort. This assumes that the transaction
         // files are named by timestamp
-        let mut files: Vec<PathBuf> = glob::glob(&self.glob)?.flat_map(|x| x).collect();
+        let mut files: Vec<PathBuf> = glob::glob(&self.glob)?.flatten().collect();
         files.sort();
         let cur = files.pop().context("no files found via glob")?;
         let prev = files.pop().context("only one file found via glob")?;

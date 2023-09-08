@@ -16,12 +16,17 @@ pub struct ServerArgs {
     /// Discord application public key
     #[arg(long, env = "DISCORD_PUBLIC_KEY")]
     public_key: String,
+
+    /// Splitwise group ID
+    #[arg(long, env = "SPLITWISE_GROUP_ID")]
+    splitwise_group_id: i64,
 }
 
 #[derive(Clone)]
 pub struct ServerState {
     pub public_key: PublicKey,
     pub bot_token: String,
+    pub splitwise_group_id: i64,
 }
 
 impl ServerArgs {
@@ -32,6 +37,7 @@ impl ServerArgs {
         let state = ServerState {
             public_key,
             bot_token: token,
+            splitwise_group_id: self.splitwise_group_id,
         };
 
         tracing::info!("building routes");

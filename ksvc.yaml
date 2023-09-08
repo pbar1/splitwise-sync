@@ -17,9 +17,13 @@ spec:
         - server
         env:
         - name: DISCORD_PUBLIC_KEY
-          value: <changeme>
+          value: <todo>
         - name: DISCORD_BOT_TOKEN
-          value: <changeme>
+          value: <todo>
+        - name: SPLITWISE_GROUP_ID
+          value: <todo>
+        - name: SPLITWISE_API_KEY
+          value: <todo>
         image: ghcr.io/pbar1/splitwise-sync:latest
         name: ""
         ports:
