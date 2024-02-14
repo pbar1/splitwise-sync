@@ -2,3 +2,5 @@
 /txns
 /result
 /result.tar
+/server/run.sh
+**/*.db*

@@ -3,6 +3,8 @@ use axum::routing::post;
 use axum::Router;
 use clap::Args;
 use ed25519_compact::PublicKey;
+use sea_orm::Database;
+use sea_orm::DatabaseConnection;
 use tokio::signal::unix::SignalKind;
 
 use crate::handlers;
@@ -20,6 +22,10 @@ pub struct ServerArgs {
     /// Splitwise group ID
     #[arg(long, env = "SPLITWISE_GROUP_ID")]
     splitwise_group_id: i64,
+
+    /// Database URL
+    #[arg(long, default_value = "sqlite://splitwise-sync.db?mode=rwc")]
+    db_url: String,
 }
 
 #[derive(Clone)]
@@ -27,6 +33,7 @@ pub struct ServerState {
     pub public_key: PublicKey,
     pub bot_token: String,
     pub splitwise_group_id: i64,
+    pub db: DatabaseConnection,
 }
 
 impl ServerArgs {
@@ -34,10 +41,14 @@ impl ServerArgs {
         let public_key = hex::decode(&self.public_key)?;
         let public_key = PublicKey::from_slice(&public_key)?;
 
+        let db = Database::connect(&self.db_url).await?;
+        db.ping().await?;
+
         let state = ServerState {
             public_key,
             bot_token: token,
             splitwise_group_id: self.splitwise_group_id,
+            db: db.clone(),
         };
 
         tracing::info!("building routes");
@@ -53,6 +64,7 @@ impl ServerArgs {
             .await?;
 
         tracing::info!("exiting");
+        db.close().await?;
         Ok(())
     }
 }
